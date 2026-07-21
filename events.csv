@@ -1,3 +1,0 @@
-date,event
-# Fill from federalreserve.gov (FOMC decision days) and bls.gov (CPI release days).
-# Format: 2026-01-28,FOMC  -- do not guess dates; use the official calendars.
