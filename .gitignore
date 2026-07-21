@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+data/
+!data/.gitkeep
+trades_out.csv
+sizing_log.json
+.venv/

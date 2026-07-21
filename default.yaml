@@ -1,0 +1,65 @@
+data:
+  path: data/ES_1min_20260120_20260415.csv   # or data/cache/es_1min.parquet
+  tz: America/New_York
+  naive_stamps_are: America/New_York         # SET FROM THE GREP TEST (America/New_York | UTC)
+  symbol: ES                                 # ES or MES
+
+session:
+  flatten_time: "16:55"
+  no_new_entries_after: "16:30"
+  rth_only: true
+
+account:                # VERIFY every number on tradeify.co before spending money
+  rule_set: select      # select | growth
+  start_balance: 50000
+  profit_target: 3000
+  eod_trailing_dd: 2000
+  daily_loss_limit: null       # growth: 1250 (soft breach). select eval: null
+  max_contracts: 4             # VERIFY per account type
+  min_trading_days: 3          # select: 3, growth: 1
+  consistency_pct: 0.40        # select eval: 0.40, growth eval: null
+  drawdown_lock_offset: 100
+
+sizing:
+  scheme: frac_pct             # frac_pct | dd_frac
+  frac_pct:
+    fraction: 0.02
+    equity_basis: nominal      # nominal | dd_allowance
+  dd_frac:
+    variant: null              # UNCONFIRMED - must set: floor_scaled | allowance_fraction | fixed_f
+    param: 0.40
+
+trade_geometry:
+  stop_ticks: 12
+  target_r: 0.5
+  time_stop_bars: 60
+
+strategy:
+  name: zscore_mr              # zscore_mr | pine_port
+  zscore_mr:
+    lookback: 200
+    z_entry: 1.8
+    exit_at_mean: true
+  pine_port:
+    entry_source: CCI
+    ccimom_length: 10
+    rsi_length: 14
+    rsi_overbought: 65
+    rsi_oversold: 35
+    use_divergence: false
+    mr_filter: all
+    mr_lookback: 200
+    band_mult: 1.8
+    trend_filter: false
+    trend_ema: 200
+
+costs:
+  commission_rt_es: 4.10       # VERIFY against your Tradovate fee schedule
+  commission_rt_mes: 1.34      # VERIFY
+  slippage_ticks_market: 1
+  slippage_ticks_limit: 0
+
+evalsim:
+  n_sims: 20000
+  attempts_budget_usd: 1000
+  seed: 7
