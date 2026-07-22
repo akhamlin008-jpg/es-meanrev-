@@ -80,8 +80,24 @@ class DDFrac(SizingScheme):
         return max(int(risk_usd // (ctx.stop_ticks * ctx.tick_value)), 0)
 
 
+class Fixed(SizingScheme):
+    """Constant contract count every trade. The correct baseline for judging a
+    SIGNAL's edge: holding size constant stops position sizing from confounding
+    the per-trade expectancy. Intelligent sizing is layered on later, only after
+    the signal is shown to be worth sizing up."""
+    name = "fixed"
+
+    def __init__(self, contracts: int = 1):
+        self.n = int(contracts)
+
+    def contracts(self, ctx: SizingContext) -> int:
+        return self.n
+
+
 def build_sizer(cfg: dict) -> SizingScheme:
     scheme = cfg["scheme"]
+    if scheme == "fixed":
+        return Fixed(cfg.get("fixed", {}).get("contracts", 1))
     if scheme == "frac_pct":
         c = cfg["frac_pct"]
         return FracPct(c["fraction"], c.get("equity_basis", "nominal"))
