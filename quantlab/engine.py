@@ -101,9 +101,12 @@ def run_backtest(df: pd.DataFrame, signals: pd.Series, account: TradeifyAccount,
             ctx = SizingContext(account.balance, account.rules.start_balance,
                                 account.hwm_eod, account.dd_limit, stop_ticks, tv)
             n = min(sizer.contracts(ctx), max_contracts)
-            # never enter a trade whose full stop-out would breach the trailing DD
-            while n > 0 and account.balance - (stop_ticks * tv * n
-                    + costs.commission(n) + costs.entry_slippage(n)) <= account.dd_limit:
+            # Reduce size only if a full stop-out would STRICTLY breach the DD line
+            # (land below it). A stop-out landing at-or-above the line is a normal
+            # losing trade and is allowed -- otherwise the account freezes when
+            # behind and can never recover.
+            while n > 1 and account.balance - (stop_ticks * tv * n
+                    + costs.commission(n) + costs.entry_slippage(n)) < account.dd_limit:
                 n -= 1
             sizing_log.append({**sizer.log_row(ctx, n), "time": str(ts.iloc[i])})
             if n > 0:
