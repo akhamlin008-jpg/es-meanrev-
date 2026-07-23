@@ -29,7 +29,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Update 1-min cache (accumulates; committed cache is the archive)
+      # Research data for the quantlab backtests. signal_check.py does NOT
+      # read this -- it fetches its own daily bars. So a Yahoo 1-min failure
+      # must never block the signal below.
+      - name: Update 1-min research cache (non-blocking)
+        continue-on-error: true
         run: python scripts/update_cache.py
 
       - name: Compute signal (single source of truth)
@@ -38,17 +42,29 @@ jobs:
       - name: Export signal.json (read-only serialization)
         run: python scripts/export_signal.py
 
-      - name: Commit cache + log + json back to this repo
+      - name: Commit log + json back to this repo
         run: |
           git config user.name  "signal-bot"
           git config user.email "actions@github.com"
-          git add data/cache/es_1min.parquet signals_log.csv signal.json
+          git add -A signals_log.csv signal.json data 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "nothing changed"
-          else
-            git commit -m "signal: $(date -u +%F) run"
-            git push
+            exit 0
           fi
+          git commit -m "signal: $(date -u +%F) run"
+          # If anything else landed on main while this job was running (an edit
+          # in the web UI, an overlapping run), a plain push is rejected.
+          # Replay our commit on top of theirs and retry instead of failing.
+          for i in 1 2 3; do
+            if git push; then
+              echo "pushed on attempt $i"
+              exit 0
+            fi
+            echo "push rejected -- rebasing onto latest main (attempt $i)"
+            git pull --rebase --autostash origin main || exit 1
+          done
+          echo "::error::could not push after 3 attempts"
+          exit 1
 
       - name: Publish signal.json to Sentry (GitHub Pages)
         env:
@@ -66,7 +82,15 @@ jobs:
           git add signal.json
           if git diff --cached --quiet; then
             echo "sentry copy unchanged"
-          else
-            git commit -m "signal.json $(date -u +%F)"
-            git push
+            exit 0
           fi
+          git commit -m "signal.json $(date -u +%F)"
+          for i in 1 2 3; do
+            if git push; then
+              echo "pushed to Sentry on attempt $i"
+              exit 0
+            fi
+            git pull --rebase --autostash origin main || exit 1
+          done
+          echo "::error::could not push signal.json to Sentry after 3 attempts"
+          exit 1
