@@ -1,0 +1,72 @@
+name: nightly-signal
+
+on:
+  schedule:
+    # 23:00 UTC Mon–Fri = 7:00 pm ET during EDT, 6:00 pm ET during EST.
+    # GitHub cron is UTC and best-effort: runs can start minutes-to-an-hour
+    # late. The dashboard shows generated_utc so lateness is visible.
+    - cron: "0 23 * * 1-5"
+  workflow_dispatch: {}   # manual "Run workflow" button for testing
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nightly-signal
+  cancel-in-progress: false
+
+jobs:
+  signal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Update 1-min cache (accumulates; committed cache is the archive)
+        run: python scripts/update_cache.py
+
+      - name: Compute signal (single source of truth)
+        run: python scripts/signal_check.py
+
+      - name: Export signal.json (read-only serialization)
+        run: python scripts/export_signal.py
+
+      - name: Commit cache + log + json back to this repo
+        run: |
+          git config user.name  "signal-bot"
+          git config user.email "actions@github.com"
+          git add data/cache/es_1min.parquet signals_log.csv signal.json
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+          else
+            git commit -m "signal: $(date -u +%F) run"
+            git push
+          fi
+
+      - name: Publish signal.json to Sentry (GitHub Pages)
+        env:
+          TOKEN: ${{ secrets.SENTRY_PUSH_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::SENTRY_PUSH_TOKEN secret is not set. Create a fine-grained PAT with contents:write on akhamlin008-jpg/Sentry and add it in Settings > Secrets > Actions."
+            exit 1
+          fi
+          git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/akhamlin008-jpg/Sentry.git" /tmp/sentry
+          cp signal.json /tmp/sentry/signal.json
+          cd /tmp/sentry
+          git config user.name  "signal-bot"
+          git config user.email "actions@github.com"
+          git add signal.json
+          if git diff --cached --quiet; then
+            echo "sentry copy unchanged"
+          else
+            git commit -m "signal.json $(date -u +%F)"
+            git push
+          fi
