@@ -1,15 +1,16 @@
 __pycache__/
 *.pyc
-# data/ contents are ignored EXCEPT the 1-min cache, which the scheduled
-# Action commits back as the persistent archive (Yahoo only serves ~7 days,
-# so losing this file loses history permanently).
-# Note: the directory itself must not be ignored or git never descends into
-# it — which is why the previous "data/" + "!data/.gitkeep" pair didn't work.
+# The 1-min price data must be tracked: Yahoo serves only ~7 days of 1m bars,
+# so losing these files loses history permanently. Everything else in data/
+# stays ignored.
+# (The directory itself must not be ignored, or git never looks inside it --
+# which is why the previous "data/" + "!data/.gitkeep" pair silently failed.)
 data/*
 !data/.gitkeep
+!data/*.csv
 !data/cache/
 data/cache/*
-!data/cache/es_1min.parquet
+!data/cache/*.parquet
 trades_out.csv
 sizing_log.json
 .venv/
