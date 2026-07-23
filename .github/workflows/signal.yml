@@ -65,32 +65,3 @@ jobs:
           done
           echo "::error::could not push after 3 attempts"
           exit 1
-
-      - name: Publish signal.json to Sentry (GitHub Pages)
-        env:
-          TOKEN: ${{ secrets.SENTRY_PUSH_TOKEN }}
-        run: |
-          if [ -z "$TOKEN" ]; then
-            echo "::error::SENTRY_PUSH_TOKEN secret is not set. Create a fine-grained PAT with contents:write on akhamlin008-jpg/Sentry and add it in Settings > Secrets > Actions."
-            exit 1
-          fi
-          git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/akhamlin008-jpg/Sentry.git" /tmp/sentry
-          cp signal.json /tmp/sentry/signal.json
-          cd /tmp/sentry
-          git config user.name  "signal-bot"
-          git config user.email "actions@github.com"
-          git add signal.json
-          if git diff --cached --quiet; then
-            echo "sentry copy unchanged"
-            exit 0
-          fi
-          git commit -m "signal.json $(date -u +%F)"
-          for i in 1 2 3; do
-            if git push; then
-              echo "pushed to Sentry on attempt $i"
-              exit 0
-            fi
-            git pull --rebase --autostash origin main || exit 1
-          done
-          echo "::error::could not push signal.json to Sentry after 3 attempts"
-          exit 1
