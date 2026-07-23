@@ -46,7 +46,7 @@ jobs:
         run: |
           git config user.name  "signal-bot"
           git config user.email "actions@github.com"
-          git add -A signals_log.csv signal.json data 2>/dev/null || true
+          git add -A signals_log.csv signal.json data trades_log.csv daily_pnl.csv learning 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "nothing changed"
             exit 0
