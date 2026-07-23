@@ -1,0 +1,61 @@
+{
+ "schema": 1,
+ "generated_utc": "2026-07-23T04:43:29+00:00",
+ "as_of": "2026-07-23",
+ "verdict": "2026-07-23",
+ "verdict_raw": "2026-07-23",
+ "rsi2": 45.74,
+ "cache_last_bar_utc": "2026-04-15T23:29:00+00:00",
+ "cache_rows": 83924,
+ "cache_file": "data/ES_1min_20260120_20260415.csv.csv",
+ "cache_warning": "PIPELINE SPLIT: update_cache.py writes data/cache/es_1min.parquet (last bar 2026-07-23T04:33:00+00:00) but the signal reads data/ES_1min_20260120_20260415.csv.csv (last bar 2026-04-15T23:29:00+00:00). Refreshing one does not refresh the other.",
+ "log": {
+  "columns": [
+   "signal_date",
+   "close",
+   "rsi2",
+   "down3",
+   "trade_next_day",
+   "logged_at"
+  ],
+  "rows": [
+   [
+    "7/22/2026",
+    "7545.5",
+    "66.21",
+    "False",
+    "False",
+    "2026-07-22T16:50:24"
+   ],
+   [
+    "2026-07-23",
+    "7532.0",
+    "45.74",
+    "False",
+    "False",
+    "2026-07-23T04:43:29"
+   ]
+  ],
+  "total_rows": 2
+ },
+ "series": {
+  "column": "rsi2",
+  "kind": "rsi",
+  "points": [
+   {
+    "date": "7/22/2026",
+    "value": 66.21
+   },
+   {
+    "date": "2026-07-23",
+    "value": 45.74
+   }
+  ]
+ },
+ "detected_columns": {
+  "date": "signal_date",
+  "verdict": "signal_date",
+  "rsi": "rsi2",
+  "equity": null
+ }
+}
