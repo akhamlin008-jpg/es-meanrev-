@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_utc": "2026-07-23T06:04:44+00:00",
+ "generated_utc": "2026-07-23T06:08:10+00:00",
  "as_of": "2026-07-23",
  "verdict": "2026-07-23",
  "verdict_raw": "2026-07-23",
@@ -8,7 +8,7 @@
  "cache_last_bar_utc": "2026-04-15T23:29:00+00:00",
  "cache_rows": 83924,
  "cache_file": "data/ES_1min_20260120_20260415.csv.csv",
- "cache_warning": "PIPELINE SPLIT: update_cache.py writes data/cache/es_1min.parquet (last bar 2026-07-23T05:54:00+00:00) but the signal reads data/ES_1min_20260120_20260415.csv.csv (last bar 2026-04-15T23:29:00+00:00). Refreshing one does not refresh the other.",
+ "cache_warning": "PIPELINE SPLIT: update_cache.py writes data/cache/es_1min.parquet (last bar 2026-07-23T05:58:00+00:00) but the signal reads data/ES_1min_20260120_20260415.csv.csv (last bar 2026-04-15T23:29:00+00:00). Refreshing one does not refresh the other.",
  "log": {
   "columns": [
    "signal_date",
