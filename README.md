@@ -8,9 +8,29 @@ out-of-sample validation.
 ## Quick start
 
     pip install -r requirements.txt
-    # put data in data/ (CSV with datetime,open,high,low,close,volume — or parquet)
-    python scripts/update_cache.py      # start free forward data accumulation (run daily)
-    python scripts/run_baseline.py      # audit + backtest + eval Monte Carlo
+    python scripts/signal_check.py          # nightly: TRADE / NO-TRADE (live rules)
+    python scripts/backtest_live_rules.py   # backtest of THOSE EXACT rules
+    python scripts/validate_spy.py          # long-history validation, both sides
+    python scripts/log_trade.py --help      # record real fills -> daily_pnl.csv
+    python scripts/run_evalsim.py           # P(pass) etc. once >= 15 traded days
+    python scripts/recalibrate.py           # weekly: model vs reality
+
+## Reconciliation (the design rule that governs this repo)
+
+quantlab/live_strategy.py is the SINGLE SOURCE OF TRUTH for the live rules,
+parameterized by the `live:` block in config/default.yaml. Three consumers:
+scripts/signal_check.py (nightly signal), scripts/backtest_live_rules.py
+(backtest of the live rules on 1-min data), scripts/validate_spy.py
+(long-history validation). Change a rule in config and all three change
+together. Never add strategy logic to a script; add it to live_strategy.py.
+
+Shorts (RSI2 > 85 OR 3 up closes) are implemented but `enable_shorts: false`
+until they pass validate_spy.py drift-adjusted AND the live-rules backtest.
+Index reversion is not symmetric; the short side must earn its own evidence.
+
+Sizing: `execution.max_contracts` is per-instrument (ES: 4, MES: 40), and the
+engine resolves the cap from what you actually trade, so running MES no
+longer inherits the 4-contract mini cap.
 
 ## Repo layout
 

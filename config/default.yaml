@@ -1,42 +1,62 @@
 data:
-  path: data/ES_1min_20260120_20260415.csv
+  path: data/ES_1min_20260120_20260415.csv.csv
   tz: America/New_York
   naive_stamps_are: America/New_York
-  symbol: ES
-session:
-  flatten_time: '16:55'
-  no_new_entries_after: '16:30'
-  rth_only: true
+  symbol: ES            # symbol of the DATA (ES prices; MES tracks it 1:1)
+
+# ---------------------------------------------------------------------------
+# LIVE RULES -- the written contract. quantlab/live_strategy.py loads this;
+# signal_check.py and backtest_live_rules.py both execute exactly this block.
+# Change a rule here and the live signal AND the backtest change together.
+# ---------------------------------------------------------------------------
+live:
+  rsi_period: 2
+  rsi_long_below: 15          # long: RSI2 < 15 ...
+  consec_down_days: 3         # ... OR 3 consecutive down closes
+  enable_shorts: false        # OFF until the short side passes validation.
+  rsi_short_above: 85         # short trigger (mirrored, NOT assumed symmetric)
+  consec_up_days: 3
+  entry_time: '10:00'         # ET, next session, market order
+  exit_time: '15:55'          # ET hard flatten
+  stop_pct: 0.02              # hard stop as % of entry
+  instrument: MES             # MES or ES -- what you actually execute
+
+execution:
+  # You can trade 4 minis OR 40 micros (1 ES = 10 MES notionally).
+  # The engine resolves the cap from the instrument being traded, so switching
+  # live.instrument between ES and MES no longer strands 90% of your size room.
+  max_contracts:
+    ES: 4
+    MES: 40
+
 account:
   rule_set: select
   start_balance: 50000
   profit_target: 3000
   eod_trailing_dd: 2000
   daily_loss_limit: null
-  max_contracts: 4
   min_trading_days: 3
   consistency_pct: 0.4
   drawdown_lock_offset: 100
+
+# Legacy 1-min intraday research path (run_baseline.py). Kept for research;
+# the LIVE system is the `live:` block above, not this.
+session:
+  flatten_time: '16:55'
+  no_new_entries_after: '16:30'
+  rth_only: true
 sizing:
   scheme: fixed
-  frac_pct:
-    fraction: 0.02
-    equity_basis: nominal
-  dd_frac:
-    variant: null
-    param: 0.4
-  fixed:
-    contracts: 1
+  frac_pct: {fraction: 0.02, equity_basis: nominal}
+  dd_frac: {variant: null, param: 0.4}
+  fixed: {contracts: 1}
 trade_geometry:
   stop_ticks: 12
   target_r: 0.5
   time_stop_bars: 60
 strategy:
   name: zscore_mr
-  zscore_mr:
-    lookback: 200
-    z_entry: 1.8
-    exit_at_mean: true
+  zscore_mr: {lookback: 200, z_entry: 1.8, exit_at_mean: true}
   pine_port:
     entry_source: CCI
     ccimom_length: 10
@@ -49,6 +69,7 @@ strategy:
     band_mult: 1.8
     trend_filter: false
     trend_ema: 200
+
 costs:
   commission_rt_es: 4.1
   commission_rt_mes: 1.34

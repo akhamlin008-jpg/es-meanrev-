@@ -107,8 +107,31 @@ def main() -> int:
         p = max(cands, key=lambda x: x.stat().st_size)
         research = {"file": p.name, "bytes": p.stat().st_size}
 
+    # Real P&L, if the trade log exists (written by scripts/log_trade.py).
+    pnl_block = None
+    tl = Path("trades_log.csv")
+    dl = Path("daily_pnl.csv")
+    if dl.exists():
+        with dl.open(newline="") as f:
+            drows = [r for r in csv.DictReader(f)]
+        vals, eq, cum = [], [], 0.0
+        for r in drows:
+            v = as_float(r.get("pnl"))
+            if v is None:
+                continue
+            cum += v
+            vals.append(v)
+            eq.append({"date": norm_date(r.get("date")), "pnl": v,
+                       "equity": round(cum, 2)})
+        if vals:
+            pnl_block = {"traded_days": len(vals), "total": round(sum(vals), 2),
+                         "worst_day": min(vals), "best_day": max(vals),
+                         "evalsim_ready": len(vals) >= 15,
+                         "days_until_evalsim": max(0, 15 - len(vals)),
+                         "equity_curve": eq[-MAX_ROWS:]}
+
     out = {
-        "schema": 2,
+        "schema": 3,
         "generated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "as_of": norm_date(cell(last, "date")),
         "verdict": verdict_of(last),
@@ -117,7 +140,8 @@ def main() -> int:
         "close": as_float(cell(last, "close")),
         "down3": (cell(last, "down3") or "").strip().lower() in TRUE,
         "logged_at": cell(last, "logged"),
-        "has_pnl": False,
+        "has_pnl": pnl_block is not None,
+        "pnl": pnl_block,
         "research_data": research,
         "log": {"columns": header,
                 "rows": [[norm_date(c) if i == idx[COLS["date"]] else c
