@@ -1,0 +1,52 @@
+name: tests
+
+# Two jobs, two dependency footprints, on purpose:
+#   runtime-tests : requirements.txt + pytest only. Proves the code that ships
+#                   (nightly signal, backtests) runs on the lean footprint.
+#   oracle-tests  : requirements-dev.txt (adds gs-quant -> scipy/statsmodels).
+#                   Validates our hand-rolled math against independent
+#                   implementations. Dev-only by contract -- the dep-guard
+#                   step and tests/test_import_guard.py enforce it.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Dep guard -- runtime requirements stay lean
+        run: |
+          if grep -Ei 'gs.quant|scipy|statsmodels|scikit-learn' requirements.txt; then
+            echo "::error::dev-only dependency found in requirements.txt"
+            exit 1
+          fi
+      - name: Install runtime deps + pytest
+        run: pip install -r requirements.txt pytest
+      - name: Run tests (oracle suite excluded)
+        run: pytest -m "not oracle"
+
+  oracle-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dev deps (gs-quant oracle stack)
+        run: pip install -r requirements-dev.txt
+      - name: Run oracle suite
+        run: pytest -m oracle
