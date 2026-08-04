@@ -1,13 +1,13 @@
 {
  "schema": 3,
- "generated_utc": "2026-08-02T23:20:02+00:00",
- "as_of": "2026-08-02",
+ "generated_utc": "2026-08-04T00:11:26+00:00",
+ "as_of": "2026-08-03",
  "verdict": "NO-TRADE",
- "rsi2": 84.21,
+ "rsi2": 91.87,
  "rsi2_threshold": 15,
- "close": 7544.75,
+ "close": 7634.75,
  "down3": false,
- "logged_at": "2026-08-02T23:20:02",
+ "logged_at": "2026-08-04T00:11:26",
  "has_pnl": false,
  "pnl": null,
  "research_data": {
@@ -105,9 +105,18 @@
     "False",
     "2026-08-02T23:20:02",
     "0.0"
+   ],
+   [
+    "2026-08-03",
+    "7634.75",
+    "91.87",
+    "False",
+    "False",
+    "2026-08-04T00:11:26",
+    "0.0"
    ]
   ],
-  "total_rows": 9
+  "total_rows": 10
  },
  "series": {
   "column": "rsi2",
@@ -156,6 +165,11 @@
    {
     "date": "2026-08-02",
     "value": 84.21,
+    "trade": false
+   },
+   {
+    "date": "2026-08-03",
+    "value": 91.87,
     "trade": false
    }
   ]
