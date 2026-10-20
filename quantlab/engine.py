@@ -84,6 +84,9 @@ def run_backtest(df: pd.DataFrame, signals: pd.Series, account: TradeifyAccount,
                 gross = side * (exit_px - entry_px) / tick * tv * n
                 pnl = gross - costs.commission(n)
                 account.on_realized(pnl)
+                # Realized balance is an equity print: enforce the trailing
+                # DD line on it, same as the per-bar unrealized check below.
+                account.check_equity(account.balance)
                 trades.append(Trade(ts.iloc[ei], t, side, n, entry_px, exit_px, pnl,
                                     exit_reason, blocks[ei],
                                     (t - ts.iloc[ei]).total_seconds()))

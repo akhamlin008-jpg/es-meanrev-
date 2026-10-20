@@ -83,6 +83,19 @@ def run(df: pd.DataFrame, rules: LiveRules, side_filter: int, contracts: int,
                 exit_px = stop_px - side * costs.slip_ticks_market * tick
                 exit_reason, exit_t = "stop", b["timestamp"]
                 break
+            # Trailing DD is enforced in REAL TIME intraday (see account.py).
+            # Mark to market at the bar close -- same convention as
+            # quantlab.engine (engine.py check_equity call) -- and force-
+            # liquidate when the equity line is breached. Without this check
+            # the backtest could report a pass on an account that was killed
+            # intraday by an adverse excursion the 2% stop never caught.
+            if account is not None and not account.failed:
+                unreal = side * (float(b["close"]) - entry_px) / tick * tv * contracts
+                account.check_equity(account.balance + unreal)
+                if account.failed:
+                    exit_px = float(b["close"]) - side * costs.slip_ticks_market * tick
+                    exit_reason, exit_t = "forced_liquidation_dd", b["timestamp"]
+                    break
         if exit_px is None:
             last = session.iloc[-1]
             exit_px = float(last["close"]) - side * costs.slip_ticks_market * tick
@@ -91,6 +104,10 @@ def run(df: pd.DataFrame, rules: LiveRules, side_filter: int, contracts: int,
         pnl = gross - costs.commission(contracts)
         if account is not None:
             account.on_realized(pnl)
+            # A realized loss is an equity print too: a stop-out that lands
+            # the balance below the trailing-DD line kills the account NOW,
+            # not at the next mark-to-market of some future position.
+            account.check_equity(account.balance)
             account.end_of_day(True)
             if account.failed:
                 trades.append({"trade_day": str(day), "side": side, "contracts": contracts,
